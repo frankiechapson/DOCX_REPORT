@@ -21,7 +21,7 @@ If you open the **document_merge_test_template.docx** you can see an example for
 You can insert fields into the doc using crtl+F9. After pressing ctrl+F9 you have to enter a field name between \{\}. This field name will be a column name of a select, so use them according this.
 
 **VERY IMPORTANT!** You can use any formatting on the fields but keep the field name in one piece! If you use different formatting for different parts of the field, the field name will break into pieces in the XML, so my program will not recognize it.
-Save and test the template often and it a field does not work, then remove the latest inserted field and insert it again and try the merge again!
+Save and test the template docx often and if a field did not work, then remove the latest inserted field and insert it again and try the merge again!
 
 ## Tables
 We can create tables. The program can repeat a table row. So we have to insert a special {/} field into the first cell of the row (what we want to repeat). And we have to insert a special closer mark \{\\} into the last cell of the row.

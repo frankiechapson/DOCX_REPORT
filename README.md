@@ -24,7 +24,7 @@ You can insert fields into the doc using crtl+F9. After pressing ctrl+F9 you hav
 Save and test the template often and it a field does not work, then remove the latest inserted field and insert it again and try the merge again!
 
 ## Tables
-We can create tables. The program can repeat a table row. So we have to insert a special {/} field into the first cell of the row (what we want to repeat). And we have to insert a special closer mark {\} into the last cell of the row.
+We can create tables. The program can repeat a table row. So we have to insert a special {/} field into the first cell of the row (what we want to repeat). And we have to insert a special closer mark \{\\} into the last cell of the row.
 And finally we have to insert the necessary fields into the cells of the table row.   
 You can see example for tables in the **document_merge_test_template.docx** file as well.
 

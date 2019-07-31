@@ -10,7 +10,6 @@ create or replace function F_DOCUMENT_MERGE ( I_DOCUMENT        in xmldom.DomDoc
     V_I                 integer;
     V_DATA              sys_refcursor;
     V_CURSOR            integer;
-    V_ROW_COUNT         integer;
     V_FETCHED_I         integer := 0;
     V_COLUMNS           integer;
     V_DESC              dbms_sql.desc_tab;
@@ -19,6 +18,7 @@ create or replace function F_DOCUMENT_MERGE ( I_DOCUMENT        in xmldom.DomDoc
     V_NOF_REPLACED      integer := 0;
     V_WE_ARE_IN_ROW     boolean := false; 
     V_MULTIPLE_DATA     boolean := false;
+    V_END_OF_CURSOR     boolean := false;
 
     V_NODE              xmldom.DomNode;  
     V_LOOP_NODE         xmldom.DomNode;    -- the TR
@@ -95,7 +95,7 @@ create or replace function F_DOCUMENT_MERGE ( I_DOCUMENT        in xmldom.DomDoc
 
                         V_COLUMN_NAME := trim( xmldom.Getnodevalue( xmldom.getFirstChild( V_COLNAM_NODE ) ) );  
                         V_END_NODE    := xmldom.getNextSibling( V_COLUMN_NODE );
-             
+            
                         if V_COLUMN_NAME in ( '/', chr( 92 ) ) then  
                             V_NODE        := DBms_xmldom.removechild( dbms_xmldom.getparentnode ( V_BEGIN_NODE  ), V_BEGIN_NODE  ); 
                             V_NODE        := DBms_xmldom.removechild( dbms_xmldom.getparentnode ( V_COLUMN_NODE ), V_COLUMN_NODE );
@@ -132,9 +132,11 @@ begin
 
         loop
            
-            V_ROW_COUNT := V_FETCHED_I;
-            V_FETCHED_I := V_FETCHED_I + dbms_sql.fetch_rows( V_CURSOR );
-            exit when V_FETCHED_I = 0;
+            if not V_END_OF_CURSOR and dbms_sql.fetch_rows( V_CURSOR ) = 0 then
+                V_END_OF_CURSOR := true;
+            end if;
+            V_FETCHED_I := V_FETCHED_I + 1;
+
             exit when V_FETCHED_I > 1 and V_NOF_REPLACED = 0;  -- if we fetched the second row and there were no replace in the first one, then exit;
 
             if V_FETCHED_I > 1 and V_MULTIPLE_DATA then
@@ -172,13 +174,19 @@ begin
                             -- \ marker shows the end of the loop
                             V_WE_ARE_IN_ROW := false;
                             if V_MULTIPLE_DATA then
-                                V_ROW_COUNT    := V_FETCHED_I;
-                                V_FETCHED_I    := V_FETCHED_I + dbms_sql.fetch_rows( V_CURSOR );
-                                if V_FETCHED_I > V_ROW_COUNT then
+
+                                if not V_END_OF_CURSOR and dbms_sql.fetch_rows( V_CURSOR ) = 0 then
+                                    V_END_OF_CURSOR := true;
+                                end if;
+
+                                V_FETCHED_I := V_FETCHED_I + 1;
+
+                                if not V_END_OF_CURSOR then
                                     V_NODE      := xmldom.clonenode( V_LOOP_NODE, true );  -- the row
                                     V_NEW_ROW   := xmldom.appendChild( V_LOOP_PARENT , V_NODE  );
                                     V_NODE_LIST := xmldom.getElementsByTagName( V_DOCUMENT, '*' );  
                                 end if;
+
                             end if;
                         
                         else
@@ -188,12 +196,16 @@ begin
                                 exit when V_I > V_COLUMNS or upper( V_DESC( V_I ).col_name ) = upper( V_COLUMN_NAME );
                                 V_I := V_I + 1;
                             end loop;
+
                         
                             if V_I <= V_COLUMNS and upper( V_DESC( V_I ).col_name ) = upper( V_COLUMN_NAME ) then      
-                                -- replace the field to the value
+
                                 dbms_sql.column_value( V_CURSOR, V_I, V_STR );   
-                                xmldom.setNodeValue( xmldom.getFirstChild( V_COLNAM_NODE ), V_STR );
+
+                                xmldom.setNodeValue( xmldom.getFirstChild( V_COLNAM_NODE ), nvl( V_STR, ' ' ) );
+
                                 V_NOF_REPLACED := V_NOF_REPLACED + 1;
+
                                 if V_WE_ARE_IN_ROW then
                                     V_MULTIPLE_DATA := true;
                                 end if;
@@ -208,11 +220,11 @@ begin
                     exit;   -- no more "BEGIN"
                 end if;
 
-                exit when V_FETCHED_I = V_ROW_COUNT or xmldom.isNull( V_BEGIN_NODE );
+                exit when xmldom.isNull( V_BEGIN_NODE );
         
             end loop;
         
-            exit when V_FETCHED_I = V_ROW_COUNT or xmldom.isNull( V_BEGIN_NODE );
+            exit when xmldom.isNull( V_BEGIN_NODE );
         
         end loop;
 
@@ -231,5 +243,3 @@ begin
 
 end;
 /
-
-

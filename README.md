@@ -39,6 +39,7 @@ The right order:
 
 ## How to call?
 
+```sql
 
     begin
         P_DOCUMENT_MERGE ( 'INP_FILE_ORA_DIR'    
@@ -51,7 +52,7 @@ The right order:
                                         ) 
                          );
     end;
-    
+```    
 
 If you use APEX, you can call **F_DOCUMENT_MERGE** which parameter is a zipped BLOB (docx file) instead of file and directory names.
 
@@ -64,8 +65,10 @@ I used **as_zip** package created by **Anton Scheffer**. Thanks to him for it!
 The **P_DOCUMENT_MERGE** procedures calls the **F_DOCUMENT_MERGE** with each SQL and finally clean the rest unnecessary nodes from the XML.
 
 We need a simple **T_STRING_LIST** type:
+```sql
 
     create or replace type T_STRING_LIST as table of varchar2( 32000 );
+```
 
 That's it!
 
